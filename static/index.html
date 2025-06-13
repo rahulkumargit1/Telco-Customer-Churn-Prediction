@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telco Churn Analytics Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1E3A8A;
+            --secondary: #FBBF24;
+            --background: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            background: var(--primary);
+            color: #FFFFFF;
+            width: 260px;
+            height: 100vh;
+            padding: 2.5rem 1.5rem;
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .sidebar h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: #D1D5DB;
+            text-decoration: none;
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            transform: translateX(5px);
+        }
+        .sidebar a.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            background: var(--background);
+            min-height: 100vh;
+            position: relative;
+        }
+        .header {
+            background: var(--card-bg);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .section {
+            display: none;
+            width: 100%;
+            min-height: calc(100vh - 80px);
+            padding: 3rem 2rem;
+            animation: fadeIn 0.5s ease-in;
+        }
+        .section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #E5E7EB;
+            margin-bottom: 2rem;
+        }
+        .tab {
+            padding: 1rem 2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--secondary);
+        }
+        .tab:hover {
+            color: var(--primary);
+            background: #F3F4F6;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .input-field {
+            background: #F9FAFB;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            padding: 0.875rem;
+            width: 100%;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2);
+            transform: scale(1.01);
+        }
+        .gradient-button {
+            background: linear-gradient(90deg, var(--secondary), #D97706);
+            color: var(--primary);
+            font-weight: 700;
+            padding: 0.875rem 2rem;
+            border-radius: 0.5rem;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .gradient-button:hover {
+            background: linear-gradient(90deg, #FCD34D, #F59E0B);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+        .gradient-button:disabled {
+            background: #D1D5DB;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .clear-button {
+            background: linear-gradient(90deg, #6B7280, #4B5563);
+            color: #FFFFFF;
+            font-weight: 700;
+            padding: 0.875rem 2rem;
+            border-radius: 0.5rem;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .clear-button:hover {
+            background: linear-gradient(90deg, #9CA3AF, #6B7280);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+        }
+        .insights-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        .insight-card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            text-align: center;
+            border: 1px solid #E5E7EB;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .insight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        .results-dashboard {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            border: 1px solid #E5E7EB;
+            animation: slideUp 0.5s ease-out;
+        }
+        .tooltip {
+            position: relative;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background: var(--primary);
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+        .progress-bar {
+            background: #E5E7EB;
+            border-radius: 1rem;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+        }
+        .progress-bar-fill {
+            background: var(--secondary);
+            height: 100%;
+            transition: width 0.5s ease-in-out;
+        }
+        .footer {
+            background: var(--card-bg);
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        .sidebar-toggle {
+            display: none;
+            background: var(--primary);
+            color: #FFFFFF;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+            .main-content {
+                margin-left: 220px;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .header {
+                padding: 1rem;
+            }
+            .insights-section {
+                grid-template-columns: 1fr;
+            }
+            .section {
+                padding: 1.5rem;
+            }
+            .footer {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .gradient-button, .clear-button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2 class="text-2xl font-extrabold">Telco Analytics</h2>
+        <a href="#insights" class="active" data-section="insights-section">Key Insights</a>
+        <a href="#predict" data-section="predict-section">Predict Churn</a>
+        <a href="#results" data-section="results-section">Results Dashboard</a>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="flex items-center gap-4">
+                    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="text-2xl font-bold text-[var(--primary)]">Telco Churn Analytics Platform</h1>
+                </div>
+                <div class="text-sm text-[var(--text-secondary)]">Powered by SDIT</div>
+            </div>
+
+            <!-- Insights Section -->
+            <div class="section active" id="insights-section">
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-6">Key Insights</h2>
+                    <div class="insights-section">
+                        <div class="insight-card">
+                            <h3 class="text-lg font-semibold text-[var(--text-primary)]">Contract Impact</h3>
+                            <p class="text-[var(--text-secondary)]">Month-to-month contracts increase churn risk by 3x compared to yearly contracts.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h3 class="text-lg font-semibold text-[var(--text-primary)]">Cost Factor</h3>
+                            <p class="text-[var(--text-secondary)]">Customers with monthly charges above $80 are 40% more likely to churn.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h3 class="text-lg font-semibold text-[var(--text-primary)]">Tenure Matters</h3>
+                            <p class="text-[var(--text-secondary)]">Customers with tenure over 2 years are 50% less likely to churn.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predict Section -->
+            <div class="section" id="predict-section">
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-6">Predict Customer Churn</h2>
+                    <div class="tab-container">
+                        <div class="tab active" data-tab="single">Single Prediction</div>
+                        <div class="tab" data-tab="batch">Batch Prediction</div>
+                    </div>
+                    <!-- Single Prediction -->
+                    <div class="tab-content active" id="single">
+                        <form id="churnForm">
+                            <!-- Sub-tabs for Single Prediction -->
+                            <div class="tab-container" id="subTabContainer">
+                                <div class="tab active" data-tab="personal">Personal Information</div>
+                                <div class="tab" data-tab="services">Services</div>
+                                <div class="tab" data-tab="billing">Billing Information</div>
+                            </div>
+                            <!-- Personal Information -->
+                            <div class="tab-content active" id="personal">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div class="tooltip">
+                                        <label for="gender" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Gender</label>
+                                        <select id="gender" name="gender" class="input-field" aria-label="Select customer gender">
+                                            <option value="Female">Female</option>
+                                            <option value="Male">Male</option>
+                                        </select>
+                                        <span class="tooltip-text">Customer's gender</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="SeniorCitizen" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Senior Citizen</label>
+                                        <select id="SeniorCitizen" name="SeniorCitizen" class="input-field" aria-label="Is customer a senior citizen?">
+                                            <option value="0">No</option>
+                                            <option value="1">Yes</option>
+                                        </select>
+                                        <span class="tooltip-text">Is the customer aged 65 or older?</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="Partner" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Partner</label>
+                                        <select id="Partner" name="Partner" class="input-field" aria-label="Does customer have a partner?">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                        <span class="tooltip-text">Does the customer have a partner?</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="Dependents" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Dependents</label>
+                                        <select id="Dependents" name="Dependents" class="input-field" aria-label="Does customer have dependents?">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                        <span class="tooltip-text">Does the customer have dependents?</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Services -->
+                            <div class="tab-content" id="services">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div class="tooltip">
+                                        <label for="PhoneService" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Phone Service</label>
+                                        <select id="PhoneService" name="PhoneService" class="input-field" aria-label="Does customer have phone service?">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to phone service</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="MultipleLines" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Multiple Lines</label>
+                                        <select id="MultipleLines" name="MultipleLines" class="input-field" aria-label="Does customer have multiple phone lines?">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No phone service">No phone service</option>
+                                        </select>
+                                        <span class="tooltip-text">Multiple phone lines subscription</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="InternetService" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Internet Service</label>
+                                        <select id="InternetService" name="InternetService" class="input-field" aria-label="Type of internet service">
+                                            <option value="Fiber optic">Fiber optic</option>
+                                            <option value="DSL">DSL</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                        <span class="tooltip-text">Type of internet service</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="OnlineSecurity" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Online Security</label>
+                                        <select id="OnlineSecurity" name="OnlineSecurity" class="input-field" aria-label="Online security subscription">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No internet service">No internet service</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to online security</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="OnlineBackup" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Online Backup</label>
+                                        <select id="OnlineBackup" name="OnlineBackup" class="input-field" aria-label="Online backup subscription">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No internet service">No internet service</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to online backup</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="DeviceProtection" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Device Protection</label>
+                                        <select id="DeviceProtection" name="DeviceProtection" class="input-field" aria-label="Device protection subscription">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No internet service">No internet service</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to device protection</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="TechSupport" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Tech Support</label>
+                                        <select id="TechSupport" name="TechSupport" class="input-field" aria-label="Tech support subscription">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No internet service">No internet service</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to tech support</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="StreamingTV" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Streaming TV</label>
+                                        <select id="StreamingTV" name="StreamingTV" class="input-field" aria-label="Streaming TV subscription">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No internet service">No internet service</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to streaming TV</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="StreamingMovies" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Streaming Movies</label>
+                                        <select id="StreamingMovies" name="StreamingMovies" class="input-field" aria-label="Streaming movies subscription">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                            <option value="No internet service">No internet service</option>
+                                        </select>
+                                        <span class="tooltip-text">Subscribed to streaming movies</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Billing Information -->
+                            <div class="tab-content" id="billing">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div class="tooltip">
+                                        <label for="tenure" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Tenure (months)</label>
+                                        <input type="number" id="tenure" name="tenure" min="0" max="120" class="input-field" required aria-label="Customer tenure in months">
+                                        <span class="tooltip-text">Months as a customer (0-120)</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="Contract" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Contract</label>
+                                        <select id="Contract" name="Contract" class="input-field" aria-label="Contract type">
+                                            <option value="Month-to-month">Month-to-month</option>
+                                            <option value="One year">One year</option>
+                                            <option value="Two year">Two year</option>
+                                        </select>
+                                        <span class="tooltip-text">Contract duration</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="PaperlessBilling" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Paperless Billing</label>
+                                        <select id="PaperlessBilling" name="PaperlessBilling" class="input-field" aria-label="Paperless billing status">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                        <span class="tooltip-text">Uses paperless billing</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="PaymentMethod" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Payment Method</label>
+                                        <select id="PaymentMethod" name="PaymentMethod" class="input-field" aria-label="Payment method">
+                                            <option value="Electronic check">Electronic check</option>
+                                            <option value="Mailed check">Mailed check</option>
+                                            <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                                            <option value="Credit card (automatic)">Credit card (automatic)</option>
+                                        </select>
+                                        <span class="tooltip-text">Preferred payment method</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="MonthlyCharges" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Monthly Charges ($)</label>
+                                        <input type="number" id="MonthlyCharges" name="MonthlyCharges" step="0.01" min="0" max="500" class="input-field" required aria-label="Monthly charges in dollars">
+                                        <span class="tooltip-text">Monthly bill amount ($0-$500)</span>
+                                    </div>
+                                    <div class="tooltip">
+                                        <label for="TotalCharges" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Total Charges ($)</label>
+                                        <input type="number" id="TotalCharges" name="TotalCharges" step="0.01" min="0" max="10000" class="input-field" required aria-label="Total charges in dollars">
+                                        <span class="tooltip-text">Total amount billed ($0-$10000)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-bar hidden" id="progressBar">
+                                <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- Batch Prediction -->
+                    <div class="tab-content" id="batch">
+                        <form id="batchForm" enctype="multipart/form-data">
+                            <div class="mb-6">
+                                <label for="batchFile" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Upload CSV File</label>
+                                <input type="file" id="batchFile" name="file" accept=".csv" class="input-field" aria-label="Upload CSV file for batch prediction">
+                                <p class="text-[var(--text-secondary)] mt-2">Upload a CSV file containing customer data with the required columns.</p>
+                            </div>
+                            <div class="progress-bar hidden" id="batchProgressBar">
+                                <div class="progress-bar-fill" id="batchProgressBarFill" style="width: 0%"></div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Footer (Predict Section Only) -->
+                <div class="footer">
+                    <button type="submit" form="churnForm" class="gradient-button" id="predictButton">
+                        <span id="buttonText">Predict Churn</span>
+                    </button>
+                    <button type="submit" form="batchForm" class="gradient-button hidden" id="batchPredictButton">
+                        <span id="batchButtonText">Predict Batch</span>
+                    </button>
+                    <button type="button" class="clear-button" id="clearButton">Clear Form</button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section" id="results-section">
+                <div class="card">
+                    <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-6">Prediction Results</h2>
+                    <div class="results-dashboard">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <p id="churnStatus" class="text-lg font-semibold"></p>
+                                <p id="churnProbability" class="text-[var(--text-secondary)] mt-2"></p>
+                                <p id="recommendation" class="text-[var(--text-secondary)] mt-4"></p>
+                            </div>
+                            <div class="text-center">
+                                <canvas id="probabilityChart" width="250" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">Feature Importance</h3>
+                            <div id="featureImportanceContainer">
+                                <canvas id="featureImportanceChart" height="150"></canvas>
+                                <p id="featureImportanceError" class="text-red-600 font-medium hidden mt-2"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="error" class="card hidden mt-6">
+                    <p class="text-red-600 font-medium"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebar.classList.toggle('hidden');
+        });
+
+        // Section Navigation
+        const sections = document.querySelectorAll('.section');
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                sections.forEach(section => section.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.add('hidden');
+                    sidebar.classList.remove('active');
+                }
+                // Ensure form fields are visible when navigating to predict section
+                if (sectionId === 'predict-section') {
+                    const singleTab = document.querySelector('#predict-section .tab[data-tab="single"]');
+                    const personalTab = document.querySelector('#subTabContainer .tab[data-tab="personal"]');
+                    singleTab.click();
+                    personalTab.click();
+                }
+            });
+        });
+
+        // Tab Navigation (Single/Batch)
+        const predictTabs = document.querySelectorAll('#predict-section > .card > .tab-container .tab');
+        const predictTabContents = document.querySelectorAll('#predict-section .tab-content');
+        const predictButton = document.getElementById('predictButton');
+        const batchPredictButton = document.getElementById('batchPredictButton');
+        predictTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                predictTabs.forEach(t => t.classList.remove('active'));
+                predictTabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                const activeTabContent = document.getElementById(tab.dataset.tab);
+                activeTabContent.classList.add('active');
+                if (tab.dataset.tab === 'single') {
+                    predictButton.classList.remove('hidden');
+                    batchPredictButton.classList.add('hidden');
+                    // Ensure personal information tab is active
+                    const personalTab = document.querySelector('#subTabContainer .tab[data-tab="personal"]');
+                    personalTab.click();
+                } else {
+                    predictButton.classList.add('hidden');
+                    batchPredictButton.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Tab Navigation (Form Sections)
+        const formTabs = document.querySelectorAll('#subTabContainer .tab');
+        const formTabContents = document.querySelectorAll('#single .tab-content');
+        formTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                formTabs.forEach(t => t.classList.remove('active'));
+                formTabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                const activeFormTabContent = document.getElementById(tab.dataset.tab);
+                activeFormTabContent.classList.add('active');
+                activeFormTabContent.style.display = 'block'; // Ensure the content is visible
+            });
+        });
+
+        // Progress Bar
+        function updateProgressBar(percentage, progressBarId = 'progressBar') {
+            const progressBar = document.getElementById(progressBarId);
+            const progressBarFill = document.getElementById(`${progressBarId}Fill`);
+            progressBar.classList.remove('hidden');
+            progressBarFill.style.width = `${percentage}%`;
+            if (percentage === 100) {
+                setTimeout(() => progressBar.classList.add('hidden'), 500);
+            }
+        }
+
+        // Single Prediction Form Submission
+        const churnForm = document.getElementById('churnForm');
+        let probabilityChart = null;
+        let featureImportanceChart = null;
+        churnForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const predictButton = document.getElementById('predictButton');
+            const buttonText = document.getElementById('buttonText');
+            predictButton.disabled = true;
+            buttonText.textContent = 'Predicting...';
+            updateProgressBar(0);
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                data.tenure = parseInt(data.tenure);
+                data.MonthlyCharges = parseFloat(data.MonthlyCharges);
+                data.TotalCharges = parseFloat(data.TotalCharges);
+
+                if (isNaN(data.tenure) || isNaN(data.MonthlyCharges) || isNaN(data.TotalCharges)) {
+                    throw new Error('Invalid numeric input: tenure, MonthlyCharges, or TotalCharges must be valid numbers');
+                }
+                if (data.tenure < 0 || data.tenure > 120) {
+                    throw new Error('Tenure must be between 0 and 120 months');
+                }
+                if (data.MonthlyCharges <= 0 || data.MonthlyCharges > 500) throw new Error('MonthlyCharges must be between 0 and 500');
+                if (data.TotalCharges <= 0 || data.TotalCharges > 10000) throw new Error('TotalCharges must be between 0 and 10000');
+
+                updateProgressBar(50);
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([data])
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Prediction failed');
+                }
+
+                const result = await response.json();
+                const prediction = result[0];
+
+                // Fetch feature importance
+                let featureImportance = [];
+                try {
+                    const featureResponse = await fetch('/feature_importance');
+                    if (!featureResponse.ok) {
+                        const errorData = await featureResponse.json();
+                        throw new Error(errorData.error || 'Failed to fetch feature importance');
+                    }
+                    featureImportance = await featureResponse.json();
+                } catch (error) {
+                    console.error('Feature Importance Error:', error.message);
+                    // Display error in the UI instead of failing completely
+                    const featureError = document.getElementById('featureImportanceError');
+                    featureError.textContent = 'Unable to load feature importance: ' + error.message;
+                    featureError.classList.remove('hidden');
+                    // Use fallback data to render a basic chart
+                    featureImportance = [
+                        { Feature: 'Feature 1 (Fallback)', Importance: 0.3 },
+                        { Feature: 'Feature 2 (Fallback)', Importance: 0.2 },
+                        { Feature: 'Feature 3 (Fallback)', Importance: 0.15 },
+                        { Feature: 'Feature 4 (Fallback)', Importance: 0.1 },
+                        { Feature: 'Feature 5 (Fallback)', Importance: 0.05 }
+                    ];
+                }
+
+                const resultsSection = document.getElementById('results-section');
+                const churnStatus = document.getElementById('churnStatus');
+                const churnProbability = document.getElementById('churnProbability');
+                const recommendation = document.getElementById('recommendation');
+                const errorDiv = document.getElementById('error');
+                errorDiv.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+                sections.forEach(section => section.classList.remove('active'));
+                resultsSection.classList.add('active');
+                sidebarLinks.forEach(link => link.classList.remove('active'));
+                document.querySelector('.sidebar a[data-section="results-section"]').classList.add('active');
+
+                churnStatus.textContent = `Churn Status: ${prediction.Churn_Status}`;
+                churnStatus.className = `text-lg font-semibold ${prediction.Churn_Status === 'No' ? 'text-green-600' : 'text-red-600'}`;
+                churnProbability.textContent = `Churn Probability: ${(prediction.Churn_Probability * 100).toFixed(2)}%`;
+                recommendation.textContent = prediction.Churn_Status === 'Yes' ?
+                    'Recommendation: Offer long-term contract discounts or enhanced support to retain this customer.' :
+                    'Recommendation: Maintain current services to ensure continued satisfaction.';
+
+                // Update Probability Chart
+                const probabilityCtx = document.getElementById('probabilityChart').getContext('2d');
+                if (probabilityChart) probabilityChart.destroy();
+                probabilityChart = new Chart(probabilityCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Churn', 'No Churn'],
+                        datasets: [{
+                            data: [prediction.Churn_Probability * 100, (1 - prediction.Churn_Probability) * 100],
+                            backgroundColor: ['#DC2626', '#059669'],
+                            borderColor: '#FFFFFF',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { size: 12, family: 'Inter' } } },
+                            title: { display: true, text: 'Churn Probability', font: { size: 16, family: 'Inter', weight: '600' } }
+                        },
+                        animation: { duration: 1000, easing: 'easeOutQuart' }
+                    }
+                });
+
+                // Update Feature Importance Chart
+                const featureCtx = document.getElementById('featureImportanceChart').getContext('2d');
+                if (featureImportanceChart) featureImportanceChart.destroy();
+                featureImportanceChart = new Chart(featureCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: featureImportance.map(item => item.Feature),
+                        datasets: [{
+                            label: 'Importance',
+                            data: featureImportance.map(item => item.Importance),
+                            backgroundColor: 'rgba(30, 58, 138, 0.7)',
+                            borderColor: 'rgba(30, 58, 138, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'Importance' } },
+                            y: { title: { display: true, text: 'Feature' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Top 10 Features Influencing Churn', font: { size: 14, family: 'Inter', weight: '600' } }
+                        },
+                        animation: { duration: 1000, easing: 'easeOutQuart' }
+                    }
+                });
+
+                updateProgressBar(100);
+            } catch (error) {
+                const errorDiv = document.getElementById('error');
+                errorDiv.querySelector('p').textContent = `Error: ${error.message}`;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                predictButton.disabled = false;
+                buttonText.textContent = 'Predict Churn';
+            }
+        });
+
+        // Batch Prediction Form Submission
+        const batchForm = document.getElementById('batchForm');
+        batchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const batchPredictButton = document.getElementById('batchPredictButton');
+            const batchButtonText = document.getElementById('batchButtonText');
+            batchPredictButton.disabled = true;
+            batchButtonText.textContent = 'Predicting...';
+            updateProgressBar(0, 'batchProgressBar');
+
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/batch_predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Batch prediction failed');
+                }
+
+                updateProgressBar(50, 'batchProgressBar');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'batch_predictions.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                updateProgressBar(100, 'batchProgressBar');
+            } catch (error) {
+                const errorDiv = document.getElementById('error');
+                errorDiv.querySelector('p').textContent = `Error: ${error.message}`;
+                errorDiv.classList.remove('hidden');
+                sections.forEach(section => section.classList.remove('active'));
+                document.getElementById('results-section').classList.add('active');
+                sidebarLinks.forEach(link => link.classList.remove('active'));
+                document.querySelector('.sidebar a[data-section="results-section"]').classList.add('active');
+            } finally {
+                batchPredictButton.disabled = false;
+                batchButtonText.textContent = 'Predict Batch';
+            }
+        });
+
+        // Form Clear
+        document.getElementById('clearButton').addEventListener('click', () => {
+            const form = document.getElementById('churnForm');
+            const batchForm = document.getElementById('batchForm');
+            form.reset();
+            batchForm.reset();
+            document.getElementById('gender').value = 'Female';
+            document.getElementById('SeniorCitizen').value = '0';
+            document.getElementById('Partner').value = 'Yes';
+            document.getElementById('Dependents').value = 'Yes';
+            document.getElementById('PhoneService').value = 'Yes';
+            document.getElementById('MultipleLines').value = 'Yes';
+            document.getElementById('InternetService').value = 'Fiber optic';
+            document.getElementById('OnlineSecurity').value = 'Yes';
+            document.getElementById('OnlineBackup').value = 'Yes';
+            document.getElementById('DeviceProtection').value = 'Yes';
+            document.getElementById('TechSupport').value = 'Yes';
+            document.getElementById('StreamingTV').value = 'Yes';
+            document.getElementById('StreamingMovies').value = 'Yes';
+            document.getElementById('Contract').value = 'Month-to-month';
+            document.getElementById('PaperlessBilling').value = 'Yes';
+            document.getElementById('PaymentMethod').value = 'Electronic check';
+            document.getElementById('tenure').value = '0';
+            document.getElementById('MonthlyCharges').value = '0';
+            document.getElementById('TotalCharges').value = '0';
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('progressBar').classList.add('hidden');
+            document.getElementById('batchProgressBar').classList.add('hidden');
+            document.getElementById('featureImportanceError').classList.add('hidden');
+            predictTabs[0].click();
+            formTabs[0].click();
+            if (probabilityChart) probabilityChart.destroy();
+            if (featureImportanceChart) featureImportanceChart.destroy();
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Keyboard Navigation
+        document.querySelectorAll('.tab, .input-field, button').forEach(element => {
+            element.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') element.click();
+            });
+        });
+
+        // Initialize form visibility on page load if predict section is active
+        window.addEventListener('load', () => {
+            const predictSection = document.getElementById('predict-section');
+            if (predictSection.classList.contains('active')) {
+                const singleTab = document.querySelector('#predict-section .tab[data-tab="single"]');
+                const personalTab = document.querySelector('#subTabContainer .tab[data-tab="personal"]');
+                singleTab.click();
+                personalTab.click();
+            }
+        });
+    </script>
+</body>
+</html>
